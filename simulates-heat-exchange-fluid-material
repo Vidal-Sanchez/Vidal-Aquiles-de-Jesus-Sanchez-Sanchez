@@ -1,0 +1,55 @@
+#this code simulates heat exchange between a fluid and a material in a tube,
+#plotting the temperature evolution until thermal equilibrium is reached.
+#using the approximation V/A->r/2 of issn:0306-2619
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+r = 0.002  # Radio del tubo en metros
+h = 18000  # Coeficiente de transferencia de calor en W/m^2*K
+gamma = 5  # Relación de masa térmica
+dt = 0.01  # Paso de tiempo
+tf_init = 523.15  # Temperatura inicial del fluido en Kelvin
+tr_init = 298.15   # Temperatura inicial del material en Kelvin
+
+rho = 7900  # Densidad del material en kg/m^3
+cr = 480    # Capacidad calorífica del material en J/kg*K
+
+num_steps = 10000
+
+tf_values = np.zeros(num_steps)
+tr_values = np.zeros(num_steps)
+
+tf_values[0] = tf_init
+tr_values[0] = tr_init
+
+equilibrium_reached = False
+equilibrium_threshold = 0.1  # Umbral de equilibrio (ajusta según tu criterio)
+for i in range(1, num_steps):
+    tr_next = tr_values[i-1] + 2 * h * dt * (tf_values[i-1] - tr_values[i-1]) / (rho * cr * r)
+    tf_next = tf_values[i-1] - gamma * (tr_next - tr_values[i-1])
+    
+    tf_values[i] = tf_next
+    tr_values[i] = tr_next
+    
+    if abs(tf_next - tr_next) < equilibrium_threshold:
+        equilibrium_reached = True
+        break
+
+steps_to_equilibrium = i if equilibrium_reached else num_steps
+
+time_range = np.linspace(0, 2, num_steps)
+
+plt.figure(figsize=(10, 6))
+plt.plot(time_range[:steps_to_equilibrium]*1000, tf_values[:steps_to_equilibrium], label='Fluido')
+plt.plot(time_range[:steps_to_equilibrium]*1000, tr_values[:steps_to_equilibrium], label='Material')
+plt.xlabel('Tiempo, (s)')
+plt.ylabel('Temperatura (K)')
+plt.xlim(0,4)
+plt.ylim(250,550)  #Límites de temperatura en Kelvin
+plt.title('Comportamiento del intercambio de calor')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+print("El equilibrio se alcanza en el paso de tiempo:", steps_to_equilibrium)
